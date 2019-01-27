@@ -1,6 +1,6 @@
-const {mongoose} = require('../db/mongoose');
+const {mongoose, Schema} = require('../db/mongoose');
 
-const Todo = mongoose.model('Todo', {
+const Todo = mongoose.model('Todo', new Schema({
     text: {
         type: String,
         required: true,
@@ -15,7 +15,7 @@ const Todo = mongoose.model('Todo', {
         type: Date,
         default: null
     }
-});
+}));
 
 module.exports = {
     Todo
