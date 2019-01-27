@@ -32,13 +32,9 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-hbs.registerHelper('currentYear', () => {
-    return new Date().getFullYear();
-});
+hbs.registerHelper('currentYear', () => new Date().getFullYear());
 
-hbs.registerHelper('toUpperCase', (text) => {
-    return text.toUpperCase();
-});
+hbs.registerHelper('toUpperCase', text => text.toUpperCase());
 
 app.get('/', (req, res) => {
     res.render('home.hbs', {
