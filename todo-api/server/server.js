@@ -20,8 +20,8 @@ app.post('/todos', (req, res) => {
 
     });
 
-    todo.save().then(doc => {
-        res.status(201).send(doc)
+    todo.save().then(todo => {
+        res.status(201).send({todo})
     }, err => {
         res.status(400).send(err)
     })
@@ -43,9 +43,9 @@ app.get('/todos/:id', (req, res) => {
 
     Todo.findById(id).then(todo => {
         if (todo) {
-            return res.status(200).send({todo})
+            res.status(200).send({todo})
         } else {
-            return res.status(404).send()
+            res.status(404).send()
         }
     }).catch(() => {
         res.status(400).send()
@@ -62,9 +62,9 @@ app.delete('/todos/:id', (req, res) => {
 
     Todo.findByIdAndDelete(id).then(todo => {
         if (todo) {
-            return res.status(200).send({todo})
+            res.status(200).send({todo})
         } else {
-            return res.status(404).send()
+            res.status(404).send()
         }
     }).catch(() => {
         res.status(400).send()
@@ -87,14 +87,28 @@ app.patch('/todos/:id', (req, res) => {
         body.completedAt = null;
     }
 
-    Todo.findOneAndUpdate(id, {$set: body}, {new: true}).then(todo => {
+    Todo.findByIdAndUpdate(id, {$set: body}, {lean: true, new: true}).then(todo => {
         if (todo) {
-            return res.status(200).send({todo})
+            res.status(200).send({todo})
         } else {
-            return res.status(404).send()
+            res.status(404).send()
         }
     }).catch(() => {
         res.status(400).send()
+    })
+});
+
+app.post('/users', (req, res) => {
+    const body = _.pick(req.body, ['email', 'password']);
+
+    const user = new User(body);
+
+    user.save().then(user => {
+        return user.generateAuthToken();
+    }).then(token => {
+        res.header('X-Auth', token).status(201).send({user})
+    }).catch(err => {
+        res.status(400).send(err)
     })
 });
 

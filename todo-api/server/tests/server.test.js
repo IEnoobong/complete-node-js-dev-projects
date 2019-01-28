@@ -4,6 +4,7 @@ const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
+const {User} = require('./../models/users');
 
 const todos = [{
     _id: new ObjectID(),
@@ -18,7 +19,9 @@ const todos = [{
 beforeEach(done => {
     Todo.deleteMany({}).then(() => {
         return Todo.insertMany(todos);
-    }).then(() => done());
+    });
+
+    User.deleteMany({}).then(() => done());
 });
 
 describe('POST /todos', () => {
@@ -30,7 +33,7 @@ describe('POST /todos', () => {
             .send({text})
             .expect(201)
             .expect(res => {
-                expect(res.body.text).toBeA('string').toBe(text)
+                expect(res.body.todo.text).toBeA('string').toBe(text)
             })
             .end((err) => {
                 if (err) {
@@ -177,5 +180,23 @@ describe('PATCH /todos/:id', () => {
                 expect(res.body.todo.completedAt).toNotExist();
             })
             .end(done);
+    });
+});
+
+describe('POST /users', () => {
+    it('should create new user', done => {
+        const payload = {email: 'ibanga@yahoo.com', password: 'yagaba'};
+
+        request(app)
+            .post('/users')
+            .send(payload)
+            .expect(201)
+            .expect(res => {
+                expect(res.header['x-auth']).toExist();
+                expect(res.body.user._id).toBeA('string');
+                expect(res.body.user.email).toBeA('string').toBe(payload.email);
+            })
+            .end(done);
+
     });
 });
