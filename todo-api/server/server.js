@@ -3,10 +3,11 @@ require('./config/config');
 const express = require('express');
 const bodyParser = require('body-parser');
 const _ = require('lodash');
+const {ObjectID} = require('mongodb');
 
 const {User} = require('./models/users');
 const {Todo} = require('./models/todo');
-const {ObjectID} = require('mongodb');
+const {authenticate} = require('./middleware/authenticate');
 
 const app = express();
 
@@ -110,6 +111,11 @@ app.post('/users', (req, res) => {
     }).catch(err => {
         res.status(400).send(err)
     })
+});
+
+app.get('/users/me', authenticate, (req, res) => {
+    const user = req.user;
+    res.status(200).send({user});
 });
 
 app.listen(port, () => {
