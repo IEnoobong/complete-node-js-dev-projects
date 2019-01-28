@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const _ = require('lodash');
 
 const {User} = require('./models/users');
 const {Todo} = require('./models/todo');
@@ -45,7 +46,7 @@ app.get('/todos/:id', (req, res) => {
             return res.status(404).send()
         }
     }).catch(() => {
-        return res.status(400).send()
+        res.status(400).send()
     });
 
 });
@@ -64,7 +65,34 @@ app.delete('/todos/:id', (req, res) => {
             return res.status(404).send()
         }
     }).catch(() => {
-        return res.status(400).send()
+        res.status(400).send()
+    })
+});
+
+app.patch('/todos/:id', (req, res) => {
+    const id = req.params.id;
+
+    if (!ObjectID.isValid(id)) {
+        return res.status(404).send()
+    }
+
+    const body = _.pick(req.body, ['text', 'completed']);
+
+    if (_.isBoolean(body.completed) && body.completed) {
+        body.completedAt = new Date();
+    } else {
+        body.completed = false;
+        body.completedAt = null;
+    }
+
+    Todo.findOneAndUpdate(id, {$set: body}, {new: true}).then(todo => {
+        if (todo) {
+            return res.status(200).send({todo})
+        } else {
+            return res.status(404).send()
+        }
+    }).catch(() => {
+        res.status(400).send()
     })
 });
 
