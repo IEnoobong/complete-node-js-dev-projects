@@ -2,7 +2,7 @@
 
 This repo contains the projects developed for the course. You can find each of the projects in their respective folders
 
-#Projects
+# Projects
 Each project has their corresponding ReadMe, see links to projects below
 1. [Notes App](notes-app)
 2. [Tests](tests)
