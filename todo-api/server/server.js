@@ -118,6 +118,21 @@ app.get('/users/me', authenticate, (req, res) => {
     res.status(200).send({user});
 });
 
+app.post('/users/login', (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+
+    User.findByCredentials(email, password)
+        .then(user => {
+            return user.generateAuthToken().then(token => {
+                res.header('X-Auth', token).status(200).send({user})
+            })
+        })
+        .catch(() => {
+            res.status(401).send({message: 'Invalid email or password'});
+        });
+});
+
 app.listen(port, () => {
     console.log(`Start app on port: ${port}`)
 });

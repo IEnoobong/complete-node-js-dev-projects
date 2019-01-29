@@ -1,5 +1,6 @@
 const expect = require('expect');
 const request = require('supertest');
+const _ = require("lodash");
 const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
@@ -178,7 +179,7 @@ describe('POST /users', () => {
             .send(payload)
             .expect(201)
             .expect(res => {
-                expect(res.header['x-auth']).toExist();
+                expect(res.headers['x-auth']).toExist();
                 expect(res.body.user._id).toExist().toBeA('string');
                 expect(res.body.user.email).toBeA('string').toBe(payload.email);
             })
@@ -191,7 +192,7 @@ describe('POST /users', () => {
                     expect(user).toExist();
                     expect(user.password).toNotBe(payload.password);
                     done();
-                })
+                }).catch(err => done(err));
             });
 
     });
@@ -240,5 +241,47 @@ describe('GET /users/me', () => {
             })
             .end(done)
 
+    });
+});
+
+describe('POST /users/login', () => {
+    it('should return x-auth when valid user logs in', done => {
+        const payload = _.pick(users[1], ['email', 'password']);
+
+        request(app)
+            .post('/users/login')
+            .send(payload)
+            .expect(200)
+            .expect(res => {
+                expect(res.headers['x-auth']).toExist();
+                expect(res.body.user.email).toBeA('string').toBe(payload.email);
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findById(users[1]._id).then(user => {
+                    expect(user.tokens[0]).toInclude({
+                        access: 'auth',
+                        token: res.headers['x-auth']
+                    });
+                    done();
+                }).catch(err => done(err));
+            });
+    });
+
+    it('should return 401 when invalid user logs in', done => {
+        const payload = {email: 'ibanga@yahoo.com', password: 'yagaba'};
+
+        request(app)
+            .post('/users/login')
+            .send(payload)
+            .expect(401)
+            .expect(res => {
+                expect(res.headers['x-auth']).toNotExist();
+                expect(res.body.message).toBeA('string').toBe('Invalid email or password');
+            })
+            .end(done);
     });
 });
