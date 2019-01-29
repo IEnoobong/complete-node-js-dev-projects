@@ -5,24 +5,10 @@ const {ObjectID} = require('mongodb');
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
 const {User} = require('./../models/users');
+const {todos, populateTodos, users, populateUsers} = require('./seed/seed');
 
-const todos = [{
-    _id: new ObjectID(),
-    text: 'First todo'
-}, {
-    _id: new ObjectID(),
-    text: 'Second todo',
-    completed: true,
-    completedAt: new Date()
-}];
-
-beforeEach(done => {
-    Todo.deleteMany({}).then(() => {
-        return Todo.insertMany(todos);
-    });
-
-    User.deleteMany({}).then(() => done());
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
     it('should create a new todo', done => {
@@ -193,10 +179,66 @@ describe('POST /users', () => {
             .expect(201)
             .expect(res => {
                 expect(res.header['x-auth']).toExist();
-                expect(res.body.user._id).toBeA('string');
+                expect(res.body.user._id).toExist().toBeA('string');
                 expect(res.body.user.email).toBeA('string').toBe(payload.email);
             })
-            .end(done);
+            .end(err => {
+                if (err) {
+                    return done(err);
+                }
+
+                User.findOne({email: payload.email}).then(user => {
+                    expect(user).toExist();
+                    expect(user.password).toNotBe(payload.password);
+                    done();
+                })
+            });
+
+    });
+
+    it('should return validation error if request invalid', done => {
+        request(app)
+            .post('/users')
+            .expect(400)
+            .expect(res => {
+                expect(res.body).toExist();
+            })
+            .end(done)
+    });
+
+    it('should not create user if email has been taken', done => {
+        request(app)
+            .post('/users')
+            .send({email: users[0].email, password: 'udembali'})
+            .expect(400)
+            .expect(res => {
+                expect(res.body).toExist();
+            })
+            .end(done)
+    });
+});
+
+describe('GET /users/me', () => {
+    it('should return user if authenticated', done => {
+        request(app)
+            .get('/users/me')
+            .set('x-auth', users[0].tokens[0].token)
+            .expect(200)
+            .expect(res => {
+                expect(res.body.user._id).toBeA('string').toBe(users[0]._id.toHexString());
+                expect(res.body.user.email).toBeA('string').toBe(users[0].email);
+            })
+            .end(done)
+    });
+
+    it('should return 401 if not authenticated', done => {
+        request(app)
+            .get('/users/me')
+            .expect(401)
+            .expect(res => {
+                expect(res.body).toEqual({})
+            })
+            .end(done)
 
     });
 });

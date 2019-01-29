@@ -31,7 +31,8 @@ const UserSchema = new Schema({
         token: {
             type: String,
             required: true
-        }
+        },
+        _id: false
     }]
 });
 
