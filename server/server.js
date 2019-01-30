@@ -20,14 +20,13 @@ io.on('connection', socket => {
         console.log('User was disconnected');
     });
 
-    socket.emit('newMessage', {
-        from: 'eno@server.com',
-        text: 'Sending you a message from the future',
-        createdAt: new Date()
-    });
-
     socket.on('createMessage', message => {
-        console.log('receiving new message', message)
+        console.log('receiving new message', message);
+        io.emit('newMessage', {
+            from: message.from,
+            text: message.text,
+            createdAt: new Date()
+        });
     })
 });
 
