@@ -16,6 +16,17 @@ app.use(express.static(publicPath));
 io.on('connection', socket => {
     console.log('New user connected');
 
+    socket.emit('newMessage', {
+        from: 'Admin',
+        text: 'Welcome to Chat App!',
+        createdAt: new Date()
+    });
+
+    socket.broadcast.emit('newMessage', {
+        from: 'Admin',
+        text: 'New User joined Chat App!',
+        createdAt: new Date()
+    });
     socket.on('disconnect', () => {
         console.log('User was disconnected');
     });
@@ -29,9 +40,6 @@ io.on('connection', socket => {
         });
     })
 });
-
-
-console.log(publicPath);
 
 server.listen(port, () => {
     console.log(`App started on port ${port}`)
