@@ -43,21 +43,27 @@ io.on('connection', socket => {
         console.log('User was disconnected');
         const user = users.removeUser(socket.id);
 
-        const userRoom = user.room;
+        if (user) {
+            const userRoom = user.room;
 
-        io.to(userRoom).emit('updateUserList', users.getUserList(userRoom));
-
-        io.to(userRoom).emit('newMessage', generateMessage('Admin', `${user.name} has left the room`))
+            io.to(userRoom).emit('updateUserList', users.getUserList(userRoom));
+            io.to(userRoom).emit('newMessage', generateMessage('Admin', `${user.name} has left the room`))
+        }
     });
 
     socket.on('createMessage', (message, callback) => {
-        console.log('receiving new message', message);
-        io.emit('newMessage', generateMessage(message.from, message.text));
+        const user = users.getUser(socket.id);
+
+        if (isRealString(message.text)) {
+            io.to(user.room).emit('newMessage', generateMessage(user.name, message.text));
+        }
         callback();
     });
 
     socket.on('createLocationMessage', coords => {
-        io.emit('newLocationMessage', generateLocationMessage('Admin', coords.latitude, coords.longitude))
+        const user = users.getUser(socket.id);
+
+        io.to(user.room).emit('newLocationMessage', generateLocationMessage(user.name, coords.latitude, coords.longitude))
     })
 });
 
