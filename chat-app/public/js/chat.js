@@ -2,6 +2,16 @@ const socket = io();
 
 socket.on('connect', function () {
     console.log('Connected to server');
+    const params = jQuery.deparam(window.location.search);
+
+    socket.emit('join', params, function (err) {
+        if (err) {
+            alert(err);
+            window.location.href = '/'
+        } else {
+
+        }
+    })
 });
 
 socket.on('disconnect', function () {
@@ -22,6 +32,18 @@ function scrollToBottom() {
         messages.scrollTop(scrollHeight);
     }
 }
+
+socket.on('updateUserList', function (users) {
+    console.log(users);
+    const ul = jQuery('<ul></ul>');
+
+    users.forEach(function (user) {
+        ul.append(jQuery('<li></li>').text(user))
+    });
+
+    jQuery('#users').html(ul);
+});
+
 socket.on('newMessage', function (message) {
     console.log('Receiving new message', message);
 
