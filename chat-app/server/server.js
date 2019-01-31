@@ -22,19 +22,27 @@ const users = new Users();
 io.on('connection', socket => {
     console.log('New user connected');
 
+    io.emit('roomsList', users.getActiveRooms());
+
     socket.on('join', (params, callback) => {
         if (!isRealString(params.name) || !isRealString(params.room)) {
             return callback('Name and room name are required')
         }
 
-        socket.join(params.room);
-        // users.removeUser(socket.id);
-        users.addUser(socket.id, params.name, params.room);
 
-        io.to(params.room).emit('updateUserList', users.getUserList(params.room));
+        if (users.userExistsWithName(params.name, params.room)) {
+            return callback(`User with name: ${params.name} already exists in room: ${params.room}`)
+        }
+
+        const user = users.addUser(socket.id, params.name, params.room);
+
+        console.log(user.roomRep);
+        socket.join(user.roomRep);
+
+        io.to(user.roomRep).emit('updateUserList', users.getUserList(user.roomRep));
 
         socket.emit('newMessage', generateMessage('Admin', `Welcome to Room ${params.room} on the Chat App`));
-        socket.broadcast.to(params.room).emit('newMessage', generateMessage('Admin', `${params.name} joined the room!`));
+        socket.broadcast.to(user.roomRep).emit('newMessage', generateMessage('Admin', `${params.name} joined the room!`));
 
         callback();
     });
@@ -44,10 +52,10 @@ io.on('connection', socket => {
         const user = users.removeUser(socket.id);
 
         if (user) {
-            const userRoom = user.room;
+            const userRoomRep = user.roomRep;
 
-            io.to(userRoom).emit('updateUserList', users.getUserList(userRoom));
-            io.to(userRoom).emit('newMessage', generateMessage('Admin', `${user.name} has left the room`))
+            io.to(userRoomRep).emit('updateUserList', users.getUserList(userRoomRep));
+            io.to(userRoomRep).emit('newMessage', generateMessage('Admin', `${user.name} has left the room`))
         }
     });
 
@@ -55,7 +63,7 @@ io.on('connection', socket => {
         const user = users.getUser(socket.id);
 
         if (isRealString(message.text)) {
-            io.to(user.room).emit('newMessage', generateMessage(user.name, message.text));
+            io.to(user.roomRep).emit('newMessage', generateMessage(user.name, message.text));
         }
         callback();
     });
@@ -63,7 +71,7 @@ io.on('connection', socket => {
     socket.on('createLocationMessage', coords => {
         const user = users.getUser(socket.id);
 
-        io.to(user.room).emit('newLocationMessage', generateLocationMessage(user.name, coords.latitude, coords.longitude))
+        io.to(user.roomRep).emit('newLocationMessage', generateLocationMessage(user.name, coords.latitude, coords.longitude))
     })
 });
 

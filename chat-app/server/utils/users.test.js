@@ -9,15 +9,18 @@ describe('Users', () => {
         users.users = [{
             id: '1',
             name: 'Eno',
-            room: "Christs'"
+            room: "Christs'",
+            roomRep: "CHRISTS'"
         }, {
             id: '2',
             name: 'Sam',
-            room: "Christs'"
+            room: "Christs'",
+            roomRep: "CHRISTS'"
         }, {
             id: '3',
             name: 'James',
-            room: "TemBe'"
+            room: "TemBe",
+            roomRep: "TEMBE"
         }];
     });
 
@@ -26,7 +29,8 @@ describe('Users', () => {
         const user = {
             id: '1234',
             name: 'Eno',
-            room: "Christs'"
+            room: "Christs'",
+            roomRep: "CHRISTS'"
         };
 
         users.addUser(user.id, user.name, user.room);
@@ -35,7 +39,7 @@ describe('Users', () => {
     });
 
     it('should return names for room', function () {
-        const usersList = users.getUserList("Christs'");
+        const usersList = users.getUserList("CHRISTS'");
 
         expect(usersList).toEqual([users.users[0].name, users.users[1].name])
     });
